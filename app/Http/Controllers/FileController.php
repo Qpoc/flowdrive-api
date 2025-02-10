@@ -41,7 +41,16 @@ class FileController extends Controller
         }
 
         return response()->stream(function () use ($path) {
-            echo Storage::disk('local')->get($path);
+            $stream = Storage::disk('local')->readStream($path);
+
+            if ($stream) {
+                while(!feof($stream)) {
+                    echo fread($stream, 1024 * 8);
+                    flush();
+                }
+
+                fclose($stream);
+            }
         }, 200, [
             'Content-Type' => Storage::disk('local')->mimeType($path),
             'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
